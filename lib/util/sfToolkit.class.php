@@ -16,7 +16,7 @@
  * @subpackage util
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
  * @author     Sean Kerr <sean@code-box.org>
- * @version    SVN: $Id: sfToolkit.class.php 29525 2010-05-19 13:01:43Z fabien $
+ * @version    SVN: $Id$
  */
 class sfToolkit
 {
@@ -274,7 +274,7 @@ class sfToolkit
   public static function stringToArray($string)
   {
     preg_match_all('/
-      \s*(\w+)              # key                               \\1
+      \s*((?:\w+-)*\w+)     # key                               \\1
       \s*=\s*               # =
       (\'|")?               # values may be included in \' or " \\2
       (.*?)                 # value                             \\3
@@ -348,13 +348,19 @@ class sfToolkit
    */
   public static function replaceConstants($value)
   {
-    return is_string($value) ? preg_replace_callback('/%(.+?)%/', create_function('$v', 'return sfConfig::has(strtolower($v[1])) ? sfConfig::get(strtolower($v[1])) : "%{$v[1]}%";'), $value) : $value;
+    if (!is_string($value))
+    {
+      return $value;
+    }
+
+    return preg_replace_callback('/%(.+?)%/', function ($v) {
+      return sfConfig::has(strtolower($v[1])) ? sfConfig::get(strtolower($v[1])) : '%'.$v[1].'%';
+    }, $value);
   }
 
   /**
    * Returns subject replaced with regular expression matchs
    *
-   * @deprecated since PHP 5.5
    * @param mixed $search        subject to search
    * @param array $replacePairs  array of search => replace pairs
    */

@@ -685,19 +685,34 @@ class lime_output
     if ($colorize)
     {
       $colorizer = $this->colorizer;
-
-      $message = preg_replace_callback('/(?:^|\.)((?:not ok|dubious|errors) *\d*)\b/', function ($matches) use ($colorizer) {
-        return $colorizer->colorize($matches[1], 'ERROR');
-      }, $message);
-      $message = preg_replace_callback('/(?:^|\.)(ok *\d*)\b/', function ($matches) use ($colorizer) {
-        return $colorizer->colorize($matches[1], 'INFO');
-      }, $message);
-      $message = preg_replace_callback('/"(.+?)"/', function ($matches) use ($colorizer) {
-        return $colorizer->colorize($matches[1], 'PARAMETER');
-      }, $message);
-      $message = preg_replace_callback('/(\->|\:\:)?([a-zA-Z0-9_]+?)\(\)/', function ($matches) use ($colorizer) {
-        return $colorizer->colorize($matches[1].$matches[2], 'PARAMETER');
-      }, $message);
+      $message = preg_replace_callback(
+        '/(?:^|\.)((?:not ok|dubious|errors) *\d*)\b/',
+        function ($match) use ($colorizer) {
+          return $colorizer->colorize($match[1], 'ERROR');
+        },
+        $message
+      );
+      $message = preg_replace_callback(
+        '/(?:^|\.)(ok *\d*)\b/',
+        function ($match) use ($colorizer) {
+          return $colorizer->colorize($match[1], 'INFO');
+        },
+        $message
+      );
+      $message = preg_replace_callback(
+        '/"(.+?)"/',
+        function ($match) use ($colorizer) {
+          return $colorizer->colorize($match[1], 'PARAMETER');
+        },
+        $message
+      );
+      $message = preg_replace_callback(
+        '/(\->|\:\:)?([a-zA-Z0-9_]+?)\(\)/',
+        function ($match) use ($colorizer) {
+          return $colorizer->colorize($match[1].$match[2].'()', 'PARAMETER');
+        },
+        $message
+      );
     }
 
     echo ($colorizer_parameter ? $this->colorizer->colorize($message, $colorizer_parameter) : $message)."\n";
@@ -810,6 +825,7 @@ class lime_harness extends lime_registration
       'force_colors' => false,
       'output'       => null,
       'verbose'      => false,
+      'test_path'    => sys_get_temp_dir(),
     ), $options);
 
     $this->php_cli = $this->find_php_cli($this->options['php_cli']);
@@ -900,8 +916,8 @@ class lime_harness extends lime_registration
 
       $relative_file = $this->get_relative_file($file);
 
-      $test_file = tempnam(sys_get_temp_dir(), 'lime');
-      $result_file = tempnam(sys_get_temp_dir(), 'lime');
+      $test_file = tempnam($this->options['test_path'], 'lime_test').'.php';
+      $result_file = tempnam($this->options['test_path'], 'lime_result');
       file_put_contents($test_file, <<<EOF
 <?php
 function lime_shutdown()

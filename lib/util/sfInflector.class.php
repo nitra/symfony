@@ -13,7 +13,7 @@
  * @package    symfony
  * @subpackage util
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfInflector.class.php 23810 2009-11-12 11:07:44Z Kris.Wallsmith $
+ * @version    SVN: $Id$
  */
 class sfInflector
 {
@@ -27,15 +27,8 @@ class sfInflector
    */
   public static function camelize($lower_case_and_underscored_word)
   {
-    $tmp = $lower_case_and_underscored_word;
-    $tmp = preg_replace_callback('#/(.?)#', function($matches) {
-      return '::'.strtoupper($matches[1]);
-    }, $tmp);
-    $tmp = preg_replace_callback('/(^|_|-)+(.)/', function($matches) {
-      return strtoupper($matches[2]);
-    }, $tmp);
 
-    return $tmp;
+    return strtr(ucwords(strtr($lower_case_and_underscored_word, array('/' => ':: ', '_' => ' ', '-' => ' '))), array(' ' => ''));
   }
 
   /**
@@ -49,8 +42,8 @@ class sfInflector
   {
     $tmp = $camel_cased_word;
     $tmp = str_replace('::', '/', $tmp);
-    $tmp = preg_replace('/([A-Z]+)([A-Z][a-z])/', '\\1_\\2', $tmp);
-    $tmp = preg_replace('/([a-z\d])([A-Z])/', '\\1_\\2', $tmp);
+    $tmp = sfToolkit::pregtr($tmp, array('/([A-Z]+)([A-Z][a-z])/' => '\\1_\\2',
+                                         '/([a-z\d])([A-Z])/'     => '\\1_\\2'));
 
     return strtolower($tmp);
   }
